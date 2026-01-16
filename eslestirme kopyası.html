@@ -1,0 +1,506 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
+    <title>  أَكْمِل الجُمْة </title>
+    
+    <script src="https://cdn.jsdelivr.net/npm/drag-drop-touch@1.3.1/DragDropTouch.js"></script>
+    
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Markazi+Text:wght@400;600&display=swap');
+        
+        :root {
+            --scale: 1; 
+        }
+
+        body{font-family:'Markazi Text',serif;font-weight:400;background-color:#000;color:#333;display:flex;justify-content:center;align-items:center;height:100vh;margin:0;padding:0;overflow:hidden}
+        #game-container{width:1920px;height:1080px;background-color:#f4f7f6;position:absolute;top:50%;left:50%;transform-origin:center center;padding:30px;box-sizing:border-box;display:flex;flex-direction:column;backface-visibility:hidden;-webkit-backface-visibility:hidden;will-change:transform}
+        h1{color:#00796b;text-align:center;margin-top:0;margin-bottom:20px;font-size:4.4rem;white-space:nowrap}
+        .etkilesim-alani{display:flex;flex-wrap:nowrap;gap:40px;flex:1;min-height:0;overflow:hidden}
+        .cumleler-kutusu{flex:1.5;min-width:0;padding-right:40px;display:flex;flex-direction:column;justify-content:space-around;overflow-x:hidden}
+        .secenekler-kutusu{flex:1;min-width:400px;background-color:#fafafa;border:2px dashed #d0d0d0;border-radius:16px;padding:20px;padding-left:40px;display:flex;flex-direction:column;align-items:center;justify-content:space-around;transition:background-color .3s ease;overflow-x:hidden}
+        .cumle-satiri{display:flex;align-items:center;margin-bottom:16px;background-color:#eee;border-radius:16px;padding:10px 20px;min-height:80px;transition:transform .3s ease,opacity .3s ease}
+        .cumle-baslangic{font-size:3.2rem;line-height:1.25;padding:4px 0;color:#222;text-align:right;margin-left:10px;flex-grow:1;min-width:0;transition:color .3s ease}
+        
+        .cumle-baslangic.metin-pasif{color:#9e9e9e}
+        
+        .kart-bitis{font-size:3.0rem;font-weight:600;line-height:1.15;padding:6px 20px;background-color:#fff;border:1px solid #ccc;border-radius:16px;margin-bottom:4px;cursor:grab;transition:opacity .2s,box-shadow .2s,transform .2s cubic-bezier(0.2, 0, 0.3, 1),background-color .3s,border-color .3s;user-select:none;-webkit-user-select:none;-webkit-touch-callout:none;width:fit-content;max-width:95%;white-space:nowrap;}
+        .kart-bitis:hover:not(.siluet){box-shadow:0 8px 16px rgba(0,0,0,.15);transform:translateY(-3px) scale(1.03)}
+        .kart-bitis.dragging{opacity:.75;box-shadow:0 20px 40px rgba(0,0,0,.3);transform:translateY(-10px) scale(1.02)}
+        
+        .kart-bitis.siluet{
+            background-color:#f0f0f0;
+            border-color:#d0d0d0;
+            color:#bbb;
+            cursor:not-allowed;
+            opacity:.3;
+            pointer-events:none;
+            transform:none!important;
+            box-shadow:none!important
+        }
+        .kart-bitis.siluet:hover{box-shadow:none;transform:none}
+        
+        .drag-ghost{
+            opacity:.7;
+            background:white;
+            border:1px solid #ccc;
+            border-radius:16px;
+            box-shadow:0 10px 20px rgba(0,0,0,.2);
+            font-family:'Markazi Text',serif; 
+            font-size:3.0rem;
+            font-weight:600;
+            line-height:1.15;
+            padding:6px 20px;
+            pointer-events:none;
+            position:absolute;
+            top:-9999px; 
+            left:-9999px;
+            z-index:999;
+            transform: none !important;
+            will-change: auto !important;
+        }
+
+        /* ===== 1. DÜZELTME (HAYALET KART BOYUTU) ===== */
+        .dnd-ghost {
+            /* Stil özelliklerini .drag-ghost'tan kopyala */
+            font-family:'Markazi Text',serif; 
+            font-size:3.0rem;
+            font-weight:600;
+            line-height:1.15;
+            padding:6px 20px;
+            border-radius:16px; 
+            background-color: #fff; /* Arka planı garantile */
+            
+            /* Ölçekleme (zaten vardı) */
+            transform: scale(var(--scale)) !important; 
+            transform-origin: top left !important;
+            opacity: 0.7 !important;
+            box-shadow: 0 10px 20px rgba(0,0,0,.2) !important;
+        }
+        /* ============================================== */
+
+
+        .birakma-alani{width:500px;flex-shrink:0;min-height:72px;border-radius:16px;transition:background-color .3s ease,box-shadow .3s ease,border-color .3s ease;display:flex;align-items:center;justify-content:center;position:relative;background-color:transparent;padding:4px 10px;box-sizing:border-box;margin-right:10px;border:2px dashed transparent}
+        @keyframes pulseBg{0%{background-color:#f0f0f0}50%{background-color:#e8e8e8}100%{background-color:#f0f0f0}}
+        .drag-over{animation:pulseBg 1.5s infinite;border-color:#aaa;box-shadow:none}
+        @keyframes elasticDrop{0%{transform:scale(1.1);opacity:.8}40%{transform:scale(.9);opacity:1}70%{transform:scale(1.05)}100%{transform:scale(1.0)}}
+        .dropped .kart-bitis{animation:elasticDrop .4s cubic-bezier(0.175, 0.885, 0.32, 1.275)}
+        .birakma-alani.dogru{background-color:transparent}
+        .kart-bitis.dogru{background-color:#e8f5e9;border-color:#4caf50;opacity:1}
+        @keyframes vibrate{0%,100%{transform:translateX(0)}10%,30%,50%,70%,90%{transform:translateX(-4px)}20%,40%,60%,80%{transform:translateX(4px)}}
+        .yanlis-anim{animation:vibrate .3s;background-color:#ffebee;border-color:#f44336}
+        .buton-alani{display:flex;justify-content:center;align-items:center;gap:30px;margin-top:20px}
+        .buton{display:block;padding:10px 40px;font-family:'Markazi Text',serif;font-size:2.6rem;font-weight:600;color:#fff;background-color:#00796b;border:none;border-radius:16px;cursor:pointer;transition:background-color .3s,transform .2s}
+        .buton:hover{background-color:#004d40}
+        #checkBtn{background-color:#4CAF50;font-size:3.6rem;padding:4px 30px;display:none}
+        #checkBtn:hover{background-color:#388E3C}
+        #geriBildirim{display:none}
+    </style>
+</head>
+<body>
+
+    <div id="game-container">
+        <h1>أَكْمِل الجُمْلة</h1>
+        
+        <div id="geriBildirim"></div>
+
+        <div class="etkilesim-alani">
+            
+            <div class="cumleler-kutusu">
+                <div class="cumle-satiri">
+                    <div class="cumle-baslangic">يَتَناولونَ طَعام العيد‫...‬</div>
+                    <div class="birakma-alani" data-id="1"></div>
+                </div>
+                <div class="cumle-satiri">
+                    <div class="cumle-baslangic">يَقول المُسْلِمون في العيد:</div>
+                    <div class="birakma-alani" data-id="2"></div>
+                </div>
+                <div class="cumle-satiri">
+                    <div class="cumle-baslangic"> المُسْلِمون يُصَلّون أَوَّلًا ‫...‬</div>
+                    <div class="birakma-alani" data-id="3"></div>
+                </div>
+                <div class="cumle-satiri">
+                    <div class="cumle-baslangic">يَحْتَفِل المُسْلِمون بِالأَعْياد‫...‬</div>
+                    <div class="birakma-alani" data-id="4"></div>
+                </div>
+                <div class="cumle-satiri">
+                    <div class="cumle-baslangic">يَزورونَ أَقارِبَهُم وَجيرانَهُم،</div>
+                    <div class="birakma-alani" data-id="5"></div>
+                </div>
+            </div>
+
+            <div class="secenekler-kutusu">
+                <div class="kart-bitis" draggable="true" data-id="1">مَع العائِلَة.</div>
+                <div class="kart-bitis" draggable="true" data-id="2">"كُلّ عام وَأَنْتُمْ بِخَيْر."</div>
+                <div class="kart-bitis" draggable="true" data-id="3">صَلاة العيد.</div>
+                <div class="kart-bitis" draggable="true" data-id="4">بِفَرَح كَبير.</div>
+                <div class="kart-bitis" draggable="true" data-id="5">وَيُكْرِمونَ ضُيُوفَهُم.</div>
+                <div class="kart-bitis" draggable="true" data-id="6">بَيْن المُسْلِمين.</div>
+            </div>
+
+        </div>
+        
+        <div class="buton-alani">
+            <button id="resetBtn" class="buton">إعادة المحاولة</button>
+            <button id="checkBtn" class="buton">&#10004;</button> 
+        </div>
+    </div>
+
+    <script>
+        document.addEventListener('DOMContentLoaded', () => {
+
+            // --- Ekran Ölçeklendirme ---
+            const gameContainer = document.getElementById('game-container');
+            const BASE_WIDTH = 1920;  
+            const BASE_HEIGHT = 1080; 
+
+            function resizeGame() {
+                const windowWidth = window.innerWidth;
+                const windowHeight = window.innerHeight;
+                const scaleX = windowWidth / BASE_WIDTH;
+                const scaleY = windowHeight / BASE_HEIGHT;
+                const scale = Math.min(scaleX, scaleY);
+                
+                document.documentElement.style.setProperty('--scale', scale); 
+                gameContainer.style.transform = `translate(-50%, -50%) scale(${scale})`;
+            }
+            resizeGame();
+            window.addEventListener('resize', resizeGame);
+            
+            // SES DÜZELTMESİ (Bu zaten vardı, iyi bir yedek)
+            gameContainer.addEventListener('pointerdown', initAudio, { once: true });
+
+
+            // --- Ses Başlatma ---
+            let audioCtx = null; 
+            function initAudio() {
+                if (audioCtx) return; 
+                try {
+                    audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+                } catch (e) {
+                    console.error('Web Audio API is not supported in this browser');
+                }
+            }
+            
+            function playSound(type) {
+                if (!audioCtx) return; 
+                
+                const oscillator = audioCtx.createOscillator();
+                const gainNode = audioCtx.createGain();
+                oscillator.connect(gainNode);
+                gainNode.connect(audioCtx.destination);
+                const now = audioCtx.currentTime;
+                gainNode.gain.setValueAtTime(0.3, now); 
+
+                switch (type) {
+                    case 'drop':
+                        oscillator.type = 'triangle';
+                        oscillator.frequency.setValueAtTime(300, now);
+                        gainNode.gain.exponentialRampToValueAtTime(0.01, now + 0.2);
+                        oscillator.start(now);
+                        oscillator.stop(now + 0.2);
+                        break;
+                    case 'wrong':
+                        oscillator.type = 'square';
+                        oscillator.frequency.setValueAtTime(150, now);
+                        oscillator.frequency.setValueAtTime(100, now + 0.1);
+                        gainNode.gain.exponentialRampToValueAtTime(0.01, now + 0.2);
+                        oscillator.start(now);
+                        oscillator.stop(now + 0.2);
+                        break;
+                    case 'win':
+                        oscillator.type = 'sine';
+                        oscillator.frequency.setValueAtTime(500, now);
+                        oscillator.frequency.setValueAtTime(800, now + 0.1);
+                        oscillator.frequency.setValueAtTime(1200, now + 0.2);
+                        gainNode.gain.exponentialRampToValueAtTime(0.01, now + 0.4);
+                        oscillator.start(now);
+                        oscillator.stop(now + 0.4);
+                        break;
+                }
+            }
+            
+            // --- Diğer Değişkenler ---
+            const cumlelerKutusu = document.querySelector('.cumleler-kutusu');
+            const kartlarContainer = document.querySelector('.secenekler-kutusu');
+            const kartlar = kartlarContainer.querySelectorAll('.kart-bitis'); 
+            const alanlar = document.querySelectorAll('.cumleler-kutusu .birakma-alani'); 
+            const resetBtn = document.getElementById('resetBtn');
+            const checkBtn = document.getElementById('checkBtn');
+            
+            let draggedCard = null;
+            let ghostElement = null; 
+            let doluSlotSayisi = 0;
+            const toplamEslestirme = alanlar.length;
+
+            // --- OYUNU SIFIRLA VE KUR ---
+            function resetGame() {
+                doluSlotSayisi = 0;
+                checkBtn.style.display = 'none';
+                resetBtn.style.display = 'block';
+
+                alanlar.forEach(alan => {
+                    alan.innerHTML = ''; 
+                    const cumleMetni = alan.parentElement.querySelector('.cumle-baslangic');
+                    if (cumleMetni) {
+                        cumleMetni.classList.remove('metin-pasif');
+                    }
+                });
+
+                kartlar.forEach(kart => {
+                    kart.classList.remove('siluet', 'dogru', 'yanlis-anim');
+                    kart.setAttribute('draggable', 'true');
+                    kart.style.cursor = 'grab';
+                });
+                
+                let cumleSatirlari = Array.from(cumlelerKutusu.querySelectorAll('.cumle-satiri'));
+                for (let i = cumleSatirlari.length - 1; i > 0; i--) {
+                    const j = Math.floor(Math.random() * (i + 1));
+                    [cumleSatirlari[i], cumleSatirlari[j]] = [cumleSatirlari[j], cumleSatirlari[i]];
+                }
+                cumleSatirlari.forEach(satir => cumlelerKutusu.appendChild(satir));
+
+                let kartArray = Array.from(kartlar);
+                for (let i = kartArray.length - 1; i > 0; i--) {
+                    const j = Math.floor(Math.random() * (i + 1));
+                    [kartArray[i], kartArray[j]] = [kartArray[j], kartArray[i]];
+                }
+                kartArray.forEach(kart => kartlarContainer.appendChild(kart));
+            }
+            
+            // --- Hibrit Sürükleme Fonksiyonları (PC+Mobil) ---
+            
+            function dragStartHandler(e) {
+                if (e.target.classList.contains('siluet')) {
+                    e.preventDefault(); 
+                    return;
+                }
+                draggedCard = e.target;
+                
+                if (e.dataTransfer) {
+                    e.dataTransfer.setData('text/plain', e.target.textContent); 
+                }
+                
+                const inSlot = draggedCard.parentElement.classList.contains('birakma-alani');
+                const isTouchDevice = ('ontouchstart' in window) || (navigator.maxTouchPoints > 0);
+
+                if (isTouchDevice || !e.dataTransfer || typeof e.dataTransfer.setDragImage !== 'function') {
+                    // --- MOBİL MANTIK ---
+                    setTimeout(() => {
+                        if (draggedCard && !inSlot) {
+                            draggedCard.classList.add('siluet');
+                        }
+                    }, 0);
+                } else {
+                    // --- MASAÜSTÜ MANTIK ---
+                    ghostElement = e.target.cloneNode(true);
+                    ghostElement.classList.add('drag-ghost');
+                    document.body.appendChild(ghostElement);
+                    
+                    e.dataTransfer.setDragImage(ghostElement, e.offsetX, e.offsetY);
+                    
+                    setTimeout(() => {
+                        if (draggedCard && !inSlot) {
+                            draggedCard.classList.add('siluet');
+                        }
+                        if (ghostElement && ghostElement.parentElement) {
+                            ghostElement.parentElement.removeChild(ghostElement);
+                            ghostElement = null;
+                        }
+                    }, 0);
+                }
+                
+                e.target.classList.add('dragging');
+            }
+            
+            // ===== DÜZELTİLMİŞ DRAGENDHANDLER =====
+            function dragEndHandler(e) {
+                if (ghostElement && ghostElement.parentElement) {
+                    ghostElement.parentElement.removeChild(ghostElement);
+                }
+                ghostElement = null;
+                
+                if (draggedCard) {
+                    // Sürüklemeyi her zaman bitir
+                    draggedCard.classList.remove('dragging');
+
+                    // KARTI KONTROL ET:
+                    // 'draggable' attribute'u 'true' ise, kart bir yuvaya bırakılmamış demektir (iptal edilmiştir).
+                    // Bu durumda 'siluet' (gri iz) sınıfını kaldır.
+                    // Eğer 'draggable' attribute'u 'false' ise (ki yuvaya bırakıldığında 'false' yapılır),
+                    // o zaman 'siluet' sınıfına dokunma, gri kalsın.
+                    if (draggedCard.getAttribute('draggable') === 'true') {
+                        draggedCard.classList.remove('siluet');
+                    }
+                }
+                
+                draggedCard = null; 
+            }
+            // ======================================
+
+
+            // 2. Olayları Ekleme
+            kartlar.forEach(kart => {
+                // ===== 2. DÜZELTME (SES) =====
+                // Sesi ilk kart dokunuşunda (sürüklemeye başlarken) başlat
+                kart.addEventListener('pointerdown', initAudio, { once: true });
+                // =============================
+                
+                kart.addEventListener('dragstart', dragStartHandler);
+                kart.addEventListener('dragend', dragEndHandler);
+            });
+
+            // 3. Bırakma Alanı Olayları (Alanlar)
+            alanlar.forEach(alan => {
+                alan.addEventListener('dragover', (e) => {
+                    e.preventDefault(); 
+                    if (!alan.querySelector('.kart-bitis')) { 
+                        alan.classList.add('drag-over');
+                    }
+                });
+                alan.addEventListener('dragleave', () => {
+                    alan.classList.remove('drag-over'); 
+                });
+                
+                alan.addEventListener('drop', (e) => {
+                    e.preventDefault();
+                    alan.classList.remove('drag-over'); 
+                    
+                    if (!draggedCard || alan.querySelector('.kart-bitis')) {
+                        return; 
+                    }
+                    
+                    // Cümleyi gri yapma kodu kaldırıldı.
+
+                    const isFromList = draggedCard.classList.contains('siluet'); 
+                    
+                    if (isFromList) {
+                        const kartKlonu = draggedCard.cloneNode(true);
+                        kartKlonu.classList.remove('dragging', 'siluet'); 
+                        kartKlonu.style.cursor = 'grab';
+                        alan.appendChild(kartKlonu);
+
+                         // Orijinal kartı (listedeki "gri iz") sürüklenemez yap
+                         // dragEndHandler bu 'false' değerine bakarak silueti SİLMEZ
+                         draggedCard.setAttribute('draggable', 'false'); 
+                        
+                        kartKlonu.addEventListener('dragstart', dragStartHandler);
+                        kartKlonu.addEventListener('dragend', dragEndHandler);
+                        
+                        doluSlotSayisi++;
+                    }
+                    else { // Slottan slota taşıma
+                        draggedCard.classList.remove('dragging'); 
+                        alan.appendChild(draggedCard); 
+                    }
+                    
+                    playSound('drop');
+                    
+                    checkButtonState(); 
+
+                    alan.classList.add('dropped');
+                    setTimeout(() => {
+                       if (alan.classList.contains('dropped')) {
+                            alan.classList.remove('dropped'); 
+                       }
+                    }, 400); 
+                });
+            });
+            
+            // 4. Bırakma Alanı Olayları (Ana Kutu - Geri Bırakma)
+            kartlarContainer.addEventListener('dragover', (e) => {
+                e.preventDefault();
+            });
+            
+            kartlarContainer.addEventListener('drop', (e) => {
+                e.preventDefault();
+                
+                if (draggedCard && draggedCard.parentElement.classList.contains('birakma-alani')) {
+                    
+                    // Orijinal kartı (gri izi) bul ve tekrar aktif et
+                    const originalKart = kartlarContainer.querySelector('.kart-bitis[data-id="' + draggedCard.dataset.id + '"]');
+                    if (originalKart) {
+                        originalKart.classList.remove('siluet');
+                        originalKart.setAttribute('draggable', 'true');
+                        originalKart.style.cursor = 'grab';
+                    }
+                    
+                    draggedCard.remove(); 
+                    
+                    doluSlotSayisi--;
+                    checkButtonState(); 
+                }
+            });
+
+            // 5. Buton Durum Kontrol Fonksiyonu
+            function checkButtonState() {
+                if (doluSlotSayisi === toplamEslestirme) {
+                    resetBtn.style.display = 'none';
+                    checkBtn.style.display = 'block';
+                } else {
+                    resetBtn.style.display = 'block';
+                    checkBtn.style.display = 'none';
+                }
+            }
+
+            // 6. KONTROL ET (TİK) BUTONU OLAYI
+            checkBtn.addEventListener('click', () => {
+                let tumuDogru = true;
+                let yanlisSayisi = 0;
+
+                alanlar.forEach(alan => {
+                    const kartKlonu = alan.querySelector('.kart-bitis');
+                    if (!kartKlonu) return; 
+
+                    kartKlonu.classList.remove('yanlis-anim', 'dogru'); 
+
+                    const cardId = kartKlonu.dataset.id;
+                    const alanId = alan.dataset.id;
+
+                    if (cardId === alanId) {
+                        kartKlonu.classList.add('dogru');
+                        kartKlonu.setAttribute('draggable', 'false');
+                        kartKlonu.style.cursor = 'default';
+                    } else {
+                        tumuDogru = false; 
+                        yanlisSayisi++;
+                        kartKlonu.classList.add('yanlis-anim'); 
+                        
+                        playSound('wrong');
+                        
+                        setTimeout(() => {
+                            const originalKart = kartlarContainer.querySelector('.kart-bitis[data-id="' + cardId + '"]');
+                            if (originalKart) {
+                                originalKart.classList.remove('siluet');
+                                originalKart.setAttribute('draggable', 'true');
+                                originalKart.style.cursor = 'grab';
+                            }
+                            
+                            if (kartKlonu && kartKlonu.parentElement) {
+                                kartKlonu.remove(); 
+                            }
+                            
+                            doluSlotSayisi--; 
+                            checkButtonState(); 
+                        }, 600); 
+                    }
+                });
+                
+                if (tumuDogru) {
+                    playSound('win'); 
+                    checkBtn.style.display = 'none';
+                    resetBtn.style.display = 'block'; 
+                }
+            });
+
+            // 7. Yeniden Başlat Butonu
+            resetBtn.addEventListener('click', resetGame); 
+            
+            // --- OYUNU İLK KEZ BAŞLAT ---
+            resetGame();
+
+        });
+    </script>
+</body>
+</html>
