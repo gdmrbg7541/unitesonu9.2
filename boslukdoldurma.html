@@ -817,7 +817,7 @@
     { 
         pre: "", 
         post: "+ أَرْبَعَة = سَبْعَة", 
-        a: ["ثَلاثَة", "ثلاثة"], 
+        a: "ثَلاثَة", 
         hint: "Sayı (Üç)" 
     },
     // 9. Edat (İçinde)
@@ -838,7 +838,7 @@
     { 
         pre: "الكِتاب قَريب", 
         post: "القَلَم", 
-        a: "مِنَ", 
+        a: "مِن", 
         hint: "Harf-i Cer (-e/-a yakın)" 
     },
     // 12. Emir Fiili (Otur)
@@ -851,8 +851,8 @@
     // 13. Nezaket İfadesi
     { 
         pre: "", 
-        post: "فَضْلِكَ، اِفْتَحْ الباب", 
-        a: "مِنْ", 
+        post: "فَضْلِكَ، اِفْتَح الباب", 
+        a: "مِن", 
         hint: "Edat (Lütfen kalıbı için)" 
     },
     // 14. Renk (Sarı)
@@ -866,7 +866,7 @@
     { 
         pre: "القَلَم", 
         post: "الطّاوِلة", 
-        a: "فَوْقَ", 
+        a: "فَوْق", 
         hint: "Yer Edatı (Üstünde)" 
     },
     // 16. Okul Bölümü
@@ -887,21 +887,21 @@
     { 
         pre: "تِسْعَة + واحِد =", 
         post: "", 
-        a: "عَشَرَة", 
+        a: ["عَشَر","عَشَرَة"], 
         hint: "Sayı (On)" 
     },
     // 19. Sınıf Eşyası (Harita)
     { 
-        pre: "هذه", 
-        post: "العالَم", 
-        a: "خَريطَة", 
-        hint: "İsim (Harita)" 
+        pre: "اِثْنان +", 
+        post: "= سَبْعَة", 
+        a: "خَمْسَة", 
+        hint: "Sayı (Yedi)" 
     },
     // 20. Yer Edatı (Altında)
     { 
         pre: "الحَقيبة", 
         post: "المَقْعَد", 
-        a: "تَحْتَ", 
+        a: ["فَوْق","تَحْت"], 
         hint: "Yer Edatı (Altında)" 
     }
 ];
@@ -1283,7 +1283,7 @@
                 // 🔥 YAMA BAŞLANGICI: Geri bildirimde gizlenecek basitleştirilmiş kelimeler
                 // Bu kelimeler, asıl hemzeli/elifli formları kabul etmek için eklenmiş
                 // klavye dostu, basitleştirilmiş versiyonlardır ve geri bildirimde gösterilmeyecektir.
-                const variantsToExclude = ["اَسْمَعُ","الاَحْمَر","الاَخْضَر","الاَصْفَر", "اَرى", "اَشْعُرُ", "اَشُمُّ", "اَلْمِسُ","اَذوقُ","اَصْدِقائي"];
+                const variantsToExclude = ["اَسْمَعُ","اَرْبَعَة","اجلس","اَصْفَر", "اكتب", " اَحْمَر", "عَشَر", " اَزْرَق","اَذوقُ","اَصْدِقائي"];
                 
                 // Cevap listesini filtrele: Sadece ana (canonical) kelimeleri bırakır.
                 const canonicalAnswers = Array.isArray(correctAnswer) 
