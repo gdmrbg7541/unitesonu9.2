@@ -441,10 +441,55 @@
     font-size: 1.5rem;
     font-family: var(--font-arabic);
 }
+/* --- YAMA: Giriş Ekranı Stilleri --- */
+#start-overlay {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100vw;
+    height: 100vh;
+    background-color: #e9ecef;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    z-index: 5000; /* Oyunun üstünde, yatay uyarı ekranının altında */
+}
+
+#start-button {
+    font-family: var(--font-arabic);
+    font-size: 4rem; /* Büyük, okunaklı yazı */
+    padding: 15px 80px;
+    background-color: var(--success-color); /* Yeşil renk */
+    color: white;
+    border: none;
+    border-radius: 50px;
+    cursor: pointer;
+    box-shadow: 0 8px 20px rgba(0,0,0,0.2);
+    transition: all 0.2s ease;
+    animation: pulseButton 2s infinite;
+}
+
+#start-button:active {
+    transform: scale(0.95);
+}
+
+@keyframes pulseButton {
+    0% { transform: scale(1); box-shadow: 0 0 0 0 rgba(40, 167, 69, 0.7); }
+    70% { transform: scale(1.05); box-shadow: 0 0 0 20px rgba(40, 167, 69, 0); }
+    100% { transform: scale(1); box-shadow: 0 0 0 0 rgba(40, 167, 69, 0); }
+}
+
+/* Oyun konteyneri başlangıçta gizli olacak, JS ile açacağız */
+.game-hidden {
+    display: none !important;
+}
 
     </style>
 </head>
 <body>
+<div id="start-overlay">
+    <button id="start-button">اِبْدَأْ</button>
+</div>
 
 <div id="orientation-warning">
     <div class="phone-icon"></div>
@@ -506,8 +551,7 @@
         // MASAÜSTÜ SEVİYELERİ (Orijinal 10x8 Izgara için)
         // MASAÜSTÜ SEVİYELERİ (Her biri 6 Kelime)
         // Dosya 1 (Meslekler/Akrabalar) ve Dosya 2 (Güzel Davranışlar) içeriğine göre düzenlenmiştir.
-         // 2. Ünite (Okulum/Sınıfım) Kelimeleri
-        const desktopLevels = [
+const desktopLevels = [
             // Seviye 1: Sınıf Eşyaları (Genel)
             [
                 { word: 'حقيبة', color: colors[0], emoji: '🎒' },    // Çanta
@@ -1052,32 +1096,63 @@
             document.addEventListener('msfullscreenchange', handleFullscreenChange);
         }
         
-        // --- Başlangıç ---
-        document.addEventListener('DOMContentLoaded', () => {
-            
-            // GÜNCELLEME: Cihaza göre ayarları yükle
-            if (isMobileDevice()) {
-                activeLevelSet = mobileLevels;
-                activeGridCols = mobileGridCols;
-                activeGridRows = mobileGridRows;
-            } else {
-                activeLevelSet = desktopLevels;
-                activeGridCols = desktopGridCols;
-                activeGridRows = desktopGridRows;
-            }
-            
-            // Şedde dönüşümünü tüm seviyelere uygula
-            activeLevelSet = preprocessLevels(activeLevelSet); 
+        
+        // --- DÜZELTME: Güncellenmiş JavaScript ---
+document.addEventListener('DOMContentLoaded', () => {
+    
+    // 1. Cihaz ve Izgara Ayarları
+    if (isMobileDevice()) {
+        activeLevelSet = mobileLevels;
+        activeGridCols = mobileGridCols;
+        activeGridRows = mobileGridRows;
+    } else {
+        activeLevelSet = desktopLevels;
+        activeGridCols = desktopGridCols;
+        activeGridRows = desktopGridRows;
+    }
+    
+    // Şedde işlemleri
+    activeLevelSet = preprocessLevels(activeLevelSet); 
 
-            // GÜNCELLEME: CSS değişkenlerini dinamik olarak ayarla
-            const rootStyle = document.documentElement.style;
-            rootStyle.setProperty('--grid-size-cols', activeGridCols);
-            rootStyle.setProperty('--grid-size-rows', activeGridRows);
+    // CSS Değişkenleri
+    const rootStyle = document.documentElement.style;
+    rootStyle.setProperty('--grid-size-cols', activeGridCols);
+    rootStyle.setProperty('--grid-size-rows', activeGridRows);
 
-            // Oyunu başlat
-            initializeGame();
-            setupFullscreen(); 
-        });
+    // --- ÖNEMLİ DÜZELTME BURADA ---
+    // Oyun alanını seç ve başlangıçta gizlemek için sınıf ekle
+    const gameContainer = document.querySelector('.activity-container');
+    gameContainer.classList.add('game-hidden');
+
+    // Oyunu arka planda hazırla
+    initializeGame();
+    setupFullscreen();
+
+    // Başlat Butonu Mantığı
+    const startBtn = document.getElementById('start-button');
+    const startOverlay = document.getElementById('start-overlay');
+
+    startBtn.addEventListener('click', () => {
+        // A. Tam Ekranı Tetikle
+        const el = document.documentElement;
+        if (el.requestFullscreen) el.requestFullscreen();
+        else if (el.webkitRequestFullscreen) el.webkitRequestFullscreen();
+        else if (el.msRequestFullscreen) el.msRequestFullscreen();
+
+        // B. Giriş ekranını gizle, OYUNU GÖSTER (Sınıfı kaldırarak)
+        startOverlay.style.display = 'none';
+        gameContainer.classList.remove('game-hidden'); // Gizleyen kilidi kaldır
+        
+        // Ses sistemini başlat
+        initAudioContext();
+
+        // C. 0.6 Saniye Bekle ve Yönerge Sesini Çal
+        setTimeout(() => {
+            const audio = new Audio('yonergeav.wav');
+            audio.play().catch(e => console.log("Ses çalma hatası:", e));
+        }, 600);
+    });
+});
 
     </script>
 
